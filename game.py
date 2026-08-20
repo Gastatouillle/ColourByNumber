@@ -79,15 +79,15 @@ class NumbersGrid(QWidget):
         if event.button() == Qt.MouseButton.RightButton:
             unalteredPos = event.position().toPoint()
             mousePos = (event.pos() - self.panOffset)/self.zoom
-            closest_point = min(self.gridCoordinates, key=lambda c: math.hypot((c[0]+(self.cellSize/2)) - mousePos.x(), (c[1]+(self.cellSize/2)) - mousePos.y()))
+            closestPoint = min(self.gridCoordinates, key=lambda c: math.hypot((c[0]+(self.cellSize/2)) - mousePos.x(), (c[1]+(self.cellSize/2)) - mousePos.y()))
             print("YmousePos " + str(unalteredPos.y()))
             if unalteredPos.y() > 50:
-                self.closestCoord = closest_point   
-                print(closest_point)
+                self.closestCoord = closestPoint   
+                print(closestPoint)
             elif unalteredPos.y() < 50:
                 print(unalteredPos.x())
                 self.selectedColour = self.usedColours.index(self.usedColours[(int((unalteredPos.x())/(self.cellSize)))])
-                self.closestCoord = closest_point
+                self.closestCoord = closestPoint
                 print("SelectedColour1 " + str(self.selectedColour))
             self.update()
 
