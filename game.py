@@ -1,5 +1,5 @@
 from PyQt6.QtCore import QPoint, Qt
-from PyQt6.QtGui import QPainter, QPen, QImage, QColor, QTransform
+from PyQt6.QtGui import QPainter, QPen, QColor
 from PyQt6.QtWidgets import QApplication, QWidget
 import sys
 import numpy as np
