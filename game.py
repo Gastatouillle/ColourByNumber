@@ -74,9 +74,9 @@ class NumbersGrid(QWidget):
         print("Drawn objects succesfully")
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton:
-            self.lastMousePos = event.pos()
         if event.button() == Qt.MouseButton.RightButton:
+            self.lastMousePos = event.pos()
+        if event.button() == Qt.MouseButton.LeftButton:
             unalteredPos = event.position().toPoint()
             mousePos = (event.pos() - self.panOffset)/self.zoom
             closestPoint = min(self.gridCoordinates, key=lambda c: math.hypot((c[0]+(self.cellSize/2)) - mousePos.x(), (c[1]+(self.cellSize/2)) - mousePos.y()))
