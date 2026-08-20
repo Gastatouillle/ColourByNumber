@@ -1,0 +1,22 @@
+Frontend gui -> Pyside6
+Image processing -> opencv + numpy
+K-means -> opencv
+Game -> Qt graphics sense
+
+
+User uploads image to Frontend, selecting number of colours desired
+    Resize image to 150x150
+
+
+
+Using kmeans compression image is compressed to selected number of colours
+
+Puzzle is generated
+    Assign each colour a number -> Largest region to lowest number
+    Draw a grid over all pixels, put number over correct pixels
+    Create outlines for each pixel and give each pixel a number
+
+Game is played
+    User must be able to drag to colour large quantities
+    User must be able to pan using right click
+    User must be able to zoom using scroll wheel
