@@ -32,11 +32,6 @@ class NumbersGrid(QWidget):
         qPainter.translate(self.panOffset)
         qPainter.scale(self.zoom, self.zoom)
 
-        # debug code, puts image underlay underneath number grid
-
-        # underlayImage = QImage("compressed.png").scaled(50, 50)
-        # qPainter.drawImage(QPoint(0,0), underlayImage)
-
         #centeringOffset holds an offset such that numbers are roughly centered to the grid cells
         centeringOffset = self.cellSize/2.5
 
