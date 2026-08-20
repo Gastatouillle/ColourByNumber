@@ -7,6 +7,7 @@ import colourToNumberConverter
 import math
 
 class NumbersGrid(QWidget):
+    #initialise all values for variables used between scopes
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Colour By Number")
@@ -19,16 +20,18 @@ class NumbersGrid(QWidget):
         self.usedCoord = []
         self.cellSize = 50
         self.selectedColour = -1
-        self.transform = QTransform
 
+    #main event, runs every update
     def paintEvent(self, event):
         print("Rendering")
+        #creates painter object, assigns default brush at beginning of each loop
         qPainter = QPainter(self)
-        
         qPainter.setBrush(Qt.BrushStyle.NoBrush)
+
+        #translates and zooms widget by offsets. Used for pan and zoom when program is running
         qPainter.translate(self.panOffset)
         qPainter.scale(self.zoom, self.zoom)
-        self.transform = QPainter.combinedTransform(qPainter)
+
         #ENSURE 3000, 3000 IS CHANGED TO SCALE WITH SELECTED IMAGE SIZE, can toggle by uncommenting
         # underlayImage = QImage("compressed.png").scaled(2500, 2500)
         # qPainter.drawImage(QPoint(0,0), underlayImage)
