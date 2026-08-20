@@ -32,30 +32,57 @@ class NumbersGrid(QWidget):
         qPainter.translate(self.panOffset)
         qPainter.scale(self.zoom, self.zoom)
 
-        #ENSURE 3000, 3000 IS CHANGED TO SCALE WITH SELECTED IMAGE SIZE, can toggle by uncommenting
-        # underlayImage = QImage("compressed.png").scaled(2500, 2500)
+        # debug code, puts image underlay underneath number grid
+
+        # underlayImage = QImage("compressed.png").scaled(50, 50)
         # qPainter.drawImage(QPoint(0,0), underlayImage)
 
+        #centeringOffset holds an offset such that numbers are roughly centered to the grid cells
         centeringOffset = self.cellSize/2.5
+
+        #store size of numbers grid matrix as rows/column
         m, n = self.numbersMatrix.shape
+
+        #iterate over the size of numbersmatrix, n and m are interchangeable as the image is always square
         for i in range(n):
+            #find current x coordinate in pixels by multiplying the column by cellsize
             x = ((i*self.cellSize))
             for j in range(m):
+                #find current y coordinate in pixels by multiplying the row by cellsize
                 y = ((j*self.cellSize))
+
+                #save the currrent coordinates to a list. Saves the top left of each cell
                 self.gridCoordinates.append([x,y])
+
+                #draw the text for each cell at x,y adjusted for centre offset. Text value is the number that cell has been assigned
                 qPainter.drawText(int((x+centeringOffset)),int((y+(self.cellSize/2)+centeringOffset)), str(self.numbersMatrix[j][i]))
+
+                #draw the grid cell relative to the top left of the cell x,y. cellSize determines the height and width of a cell
                 qPainter.drawRect(x, y, self.cellSize, self.cellSize)
 
+        #if the closest cell is not default value
         if self.closestCoord != [-1,-1]:
+            #find the number a cell/tile has been assigned by dividing the x and y value of the coordinate by the cellsize. eg: If closestcoord is [100, 100], tile is matrix index -> [2,2]
             tileNumber = self.numbersMatrix[int(((self.closestCoord[1])/self.cellSize))][int(((self.closestCoord[0])/self.cellSize))]
+
+            #find the rgb value of a cell by accessing the list of colours that are in the picture. usedcolours is a list of np.floats. So must be converted to RGB values
             rgbVal = [(self.usedColours[tileNumber-1][0]*255).astype(np.uint8), (self.usedColours[tileNumber-1][1]*255).astype(np.uint8), (self.usedColours[tileNumber-1][2]*255).astype(np.uint8)]
             print("InternalRGB " + str(rgbVal))
+
+            #if the selected colour is the same as the number of the cell. ie: if selected colour = 1, and tile number = 1. Continue
             if self.selectedColour == tileNumber-1:
                 self.usedCoord.append([self.closestCoord, rgbVal])
 
+            #iterate over the list of coordinates that have been used. This redraws all completed cells each update
+            #usedCoords is of form [[x,y], [r,g,b]]
             for coords in range(len(self.usedCoord)):
+                #set the colour of the brush to the colour of the cell
                 qPainter.setBrush(QColor(self.usedCoord[coords][1][0], self.usedCoord[coords][1][1], self.usedCoord[coords][1][2]))
+
+                #draw the cell itself at the coordinates accessed from coords and at cellsize by cellsize
                 qPainter.drawRect(self.usedCoord[coords][0][0], self.usedCoord[coords][0][1], self.cellSize, self.cellSize)
+
+                #reset the brush colour to white
                 qPainter.setBrush(QColor(255,255,255))
 
         qPainter.resetTransform()
