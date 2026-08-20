@@ -85,15 +85,24 @@ class NumbersGrid(QWidget):
                 #reset the brush colour to white
                 qPainter.setBrush(QColor(255,255,255))
 
+        #Prevent the next section from transforming when panning or zooming
         qPainter.resetTransform()
 
+        #itrate over the used colours
         for i in range(len(self.usedColours)):
+            #if the current colour is not the selected colour draw colour selector bar with no selection
             if i != self.selectedColour:
+                #set brush colour to the colour of current iteration
                 qPainter.setBrush(QColor((self.usedColours[i][0]*255).astype(np.uint8), (self.usedColours[i][1]*255).astype(np.uint8), (self.usedColours[i][2]*255).astype(np.uint8)))
+
+                #Draw cells
                 qPainter.drawRect((i*(self.cellSize)), 0, self.cellSize, self.cellSize)
+
+                #reset brush so text is black, then draw text into cell adjusted for centering
                 qPainter.setBrush(Qt.BrushStyle.NoBrush)
                 qPainter.drawText(20+(i*(self.cellSize)), 20, str(i+1))
             else:
+                #if the selected cell is the current i value, draw the cell the same as above, but with a white box surrounding
                 qPainter.setBrush(QColor((self.usedColours[i][0]*255).astype(np.uint8), (self.usedColours[i][1]*255).astype(np.uint8), (self.usedColours[i][2]*255).astype(np.uint8)))
                 qPainter.setPen(QPen(QColor(255,255,255), 3))
                 qPainter.drawRect((i*(self.cellSize)), 0, self.cellSize, self.cellSize)
@@ -104,43 +113,56 @@ class NumbersGrid(QWidget):
         print("Drawn objects succesfully")
 
     def mousePressEvent(self, event):
+        #on right click, set the last mouse position to the current mouse position. Used for zoom and pan later
         if event.button() == Qt.MouseButton.RightButton:
             self.lastMousePos = event.pos()
         if event.button() == Qt.MouseButton.LeftButton:
-            unalteredPos = event.position().toPoint()
+            #on left click, set two positions for mouse. One adjusted for zoom and pan offsets. relative to the window rather than the canvas
+            windowPos = event.position().toPoint()
             mousePos = (event.pos() - self.panOffset)/self.zoom
+
+            #find the closest grid cell centre, this line iterates over the grid cells and compares them to the adjusted mouse position. Finding the closest centre of a cell
             closestPoint = min(self.gridCoordinates, key=lambda c: math.hypot((c[0]+(self.cellSize/2)) - mousePos.x(), (c[1]+(self.cellSize/2)) - mousePos.y()))
-            print("YmousePos " + str(unalteredPos.y()))
-            if unalteredPos.y() > 50:
+
+            #if the mouse position relative to the window is greater than 50. Set the closest grid coordinate to the closest centre
+            if windowPos.y() > 50:
                 self.closestCoord = closestPoint   
                 print(closestPoint)
-            elif unalteredPos.y() < 50:
-                print(unalteredPos.x())
-                self.selectedColour = self.usedColours.index(self.usedColours[(int((unalteredPos.x())/(self.cellSize)))])
+            elif windowPos.y() < 50:
+                #if the mouse position is less than 50, meaning the user is selecting a new colour as the colour selector cells are in the top 50 px
+                #change selected colour to the colour of clicked cell
+                print(windowPos.x())
+                self.selectedColour = self.usedColours.index(self.usedColours[(int((windowPos.x())/(self.cellSize)))])
                 self.closestCoord = closestPoint
-                print("SelectedColour1 " + str(self.selectedColour))
+                print("SelectedColour " + str(self.selectedColour))
+
+            #runs the paint event
             self.update()
 
-            #check mouse pos
-            #find what cell mouse is in
-            #check cell number
-            #fill with correct colour
-
+    #On mouse move
     def mouseMoveEvent(self, event):
+            #pan the screen when the mouse is dragged
             delta = event.pos() - self.lastMousePos
             self.panOffset += delta
             self.lastMousePos = event.pos()
+
+            #run paint event
             self.update()
 
     def wheelEvent(self, event):
+        #on scroll wheel, zoom in and out by 1.1x
         if event.angleDelta().y() > 0:
             self.zoom *= 1.1
         else:
             self.zoom /= 1.1
         self.update() 
 
-        
+
+#create app object and window object
 app = QApplication(sys.argv)
 window = NumbersGrid()
+#show the windows
 window.show()
+
+#on exit of app, kill all traces
 sys.exit(app.exec())
