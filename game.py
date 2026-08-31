@@ -5,6 +5,7 @@ import sys
 import numpy as np
 import colourToNumberConverter
 import math
+import time
 
 class NumbersGrid(QWidget):
     #initialise all values for variables used between scopes
@@ -20,6 +21,7 @@ class NumbersGrid(QWidget):
         self.usedCoord = []
         self.cellSize = 50
         self.selectedColour = -1
+        self.elapsedTimes = []
 
     #main event, runs every update
     def paintEvent(self, event):
@@ -70,6 +72,7 @@ class NumbersGrid(QWidget):
 
             #iterate over the list of coordinates that have been used. This redraws all completed cells each update
             #usedCoords is of form [[x,y], [r,g,b]]
+            start = time.time()
             for coords in range(len(self.usedCoord)):
                 #set the colour of the brush to the colour of the cell
                 qPainter.setBrush(QColor(self.usedCoord[coords][1][0], self.usedCoord[coords][1][1], self.usedCoord[coords][1][2]))
@@ -79,6 +82,12 @@ class NumbersGrid(QWidget):
 
                 #reset the brush colour to white
                 qPainter.setBrush(QColor(255,255,255))
+
+            end = time.time()
+            elapsed = end-start
+            self.elapsedTimes.append(elapsed)
+            print("Elapsed coords time: " + str(elapsed))
+            print("Elapsed times: " + str(self.elapsedTimes))
 
         #Prevent the next section from transforming when panning or zooming
         qPainter.resetTransform()
