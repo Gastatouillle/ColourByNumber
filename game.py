@@ -115,6 +115,7 @@ class NumbersGrid(QWidget):
 
 
     def mousePressEvent(self, event):
+        start = time.time()
         #on right click, set the last mouse position to the current mouse position. Used for zoom and pan later
         if event.button() == Qt.MouseButton.RightButton:
             self.lastMousePos = event.pos()
@@ -123,12 +124,22 @@ class NumbersGrid(QWidget):
             windowPos = event.position().toPoint()
             mousePos = (event.pos() - self.panOffset)/self.zoom
 
-            start = time.time()
             #find the closest grid cell centre, this line iterates over the grid cells and compares them to the adjusted mouse position. Finding the closest centre of a cell
-            closestPoint = min(self.gridCoordinates, key=lambda c: math.hypot((c[0]+(self.cellSize/2)) - mousePos.x(), (c[1]+(self.cellSize/2)) - mousePos.y()))
-            end = time.time()
-            elapsed = end-start
-            self.elapsedTimes.append([len(self.elapsedTimes),elapsed])
+            minDistance = float('inf')  # Start with infinity so any distance is smaller
+
+            for coords in self.gridCoordinates:
+                # find the center point of the current cell
+                cellCenterX = (coords[0] + (self.cellSize / 2)) - mousePos.x()
+                cellCenterY = (coords[1] + (self.cellSize / 2)) - mousePos.y()
+                
+                # Calculate actual straight-line distance
+                distance = math.hypot(cellCenterX, cellCenterY)
+                
+                # Update if this cell is closer than the previous closest cell
+                if distance < minDistance:
+                    minDistance = distance
+                    closestPoint = coords
+
 
             #if the mouse position relative to the window is greater than 50. Set the closest grid coordinate to the closest centre
             if windowPos.y() > 50:
@@ -145,6 +156,9 @@ class NumbersGrid(QWidget):
 
             #runs the paint event
             self.update()
+        end = time.time()
+        elapsed = end-start
+        self.elapsedTimes.append([len(self.elapsedTimes),elapsed])
 
     #On mouse move
     def mouseMoveEvent(self, event):
