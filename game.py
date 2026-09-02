@@ -61,7 +61,7 @@ class NumbersGrid(QWidget):
                 #draw the grid cell relative to the top left of the cell x,y. cellSize determines the height and width of a cell
                 qPainter.drawRect(x, y, self.cellSize, self.cellSize)
         #Ensures gridcoordinates will not be added too
-        
+
         self.gridCoordsApplied = True
         #colour cells
         #if the closest cell is not default value
@@ -147,10 +147,10 @@ class NumbersGrid(QWidget):
 
 
             #if the mouse position relative to the window is greater than 50. Set the closest grid coordinate to the closest centre
-            if windowPos.y() > 50:
+            if windowPos.y() > 50 or windowPos.x() > 1250:
                 self.closestCoord = closestPoint   
                 print(closestPoint)
-            elif windowPos.y() < 50:
+            elif windowPos.y() < 50 and windowPos.x() < 1250:
                 #if the mouse position is less than 50, meaning the user is selecting a new colour as the colour selector cells are in the top 50 px
                 #change selected colour to the colour of clicked cell
                 print(windowPos.x())
