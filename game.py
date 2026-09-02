@@ -40,6 +40,7 @@ class NumbersGrid(QWidget):
         #store size of numbers grid matrix as rows/column
         m, n = self.numbersMatrix.shape
 
+        #draw full grid
         #iterate over the size of numbersmatrix, n and m are interchangeable as the image is always square
         for i in range(n):
             #find current x coordinate in pixels by multiplying the column by cellsize
@@ -57,6 +58,7 @@ class NumbersGrid(QWidget):
                 #draw the grid cell relative to the top left of the cell x,y. cellSize determines the height and width of a cell
                 qPainter.drawRect(x, y, self.cellSize, self.cellSize)
 
+        #colour cells
         #if the closest cell is not default value
         if self.closestCoord != [-1,-1]:
             #find the number a cell/tile has been assigned by dividing the x and y value of the coordinate by the cellsize. eg: If closestcoord is [100, 100], tile is matrix index -> [2,2]
@@ -72,7 +74,6 @@ class NumbersGrid(QWidget):
 
             #iterate over the list of coordinates that have been used. This redraws all completed cells each update
             #usedCoords is of form [[x,y], [r,g,b]]
-            start = time.time()
             for coords in range(len(self.usedCoord)):
                 #set the colour of the brush to the colour of the cell
                 qPainter.setBrush(QColor(self.usedCoord[coords][1][0], self.usedCoord[coords][1][1], self.usedCoord[coords][1][2]))
@@ -83,15 +84,12 @@ class NumbersGrid(QWidget):
                 #reset the brush colour to white
                 qPainter.setBrush(QColor(255,255,255))
 
-            end = time.time()
-            elapsed = end-start
-            self.elapsedTimes.append(elapsed)
-            print("Elapsed coords time: " + str(elapsed))
-            print("Elapsed times: " + str(self.elapsedTimes))
+
 
         #Prevent the next section from transforming when panning or zooming
         qPainter.resetTransform()
 
+        #draw colour selector bar
         #itrate over the used colours
         for i in range(len(self.usedColours)):
             #if the current colour is not the selected colour draw colour selector bar with no selection
@@ -114,7 +112,7 @@ class NumbersGrid(QWidget):
                 qPainter.setPen(Qt.PenStyle.SolidLine)
                 qPainter.drawText(20+(i*(self.cellSize)), 20, str(i+1))
 
-        print("Drawn objects succesfully")
+
 
     def mousePressEvent(self, event):
         #on right click, set the last mouse position to the current mouse position. Used for zoom and pan later
@@ -125,8 +123,12 @@ class NumbersGrid(QWidget):
             windowPos = event.position().toPoint()
             mousePos = (event.pos() - self.panOffset)/self.zoom
 
+            start = time.time()
             #find the closest grid cell centre, this line iterates over the grid cells and compares them to the adjusted mouse position. Finding the closest centre of a cell
             closestPoint = min(self.gridCoordinates, key=lambda c: math.hypot((c[0]+(self.cellSize/2)) - mousePos.x(), (c[1]+(self.cellSize/2)) - mousePos.y()))
+            end = time.time()
+            elapsed = end-start
+            self.elapsedTimes.append([len(self.elapsedTimes),elapsed])
 
             #if the mouse position relative to the window is greater than 50. Set the closest grid coordinate to the closest centre
             if windowPos.y() > 50:
@@ -139,6 +141,7 @@ class NumbersGrid(QWidget):
                 self.selectedColour = self.usedColours.index(self.usedColours[(int((windowPos.x())/(self.cellSize)))])
                 self.closestCoord = closestPoint
                 print("SelectedColour " + str(self.selectedColour))
+                print("Drawn objects succesfully")
 
             #runs the paint event
             self.update()
@@ -169,4 +172,10 @@ window = NumbersGrid()
 window.show()
 
 #on exit of app, kill all traces
-sys.exit(app.exec())
+if not app.exec():
+    with open("elapsedTimes.txt", "w", encoding="utf-8") as file:
+        file.write(str(window.elapsedTimes))
+    print(window.elapsedTimes)
+    sys.exit()
+
+#8x26 grid for timing tests
