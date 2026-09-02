@@ -17,6 +17,7 @@ class NumbersGrid(QWidget):
         self.numbersMatrix, self.usedColours = colourToNumberConverter.GenerateNumberGrid()
         self.zoom = 1.0
         self.gridCoordinates = []
+        self.gridCoordsApplied = False
         self.closestCoord = [-1,-1]
         self.usedCoord = []
         self.cellSize = 50
@@ -50,14 +51,17 @@ class NumbersGrid(QWidget):
                 y = ((j*self.cellSize))
 
                 #save the currrent coordinates to a list. Saves the top left of each cell
-                self.gridCoordinates.append([x,y])
+                #if statement to avoid appending the same information to the list every update
+                if self.gridCoordsApplied == False:
+                    self.gridCoordinates.append([x,y])
 
                 #draw the text for each cell at x,y adjusted for centre offset. Text value is the number that cell has been assigned
                 qPainter.drawText(int((x+centeringOffset)),int((y+(self.cellSize/2)+centeringOffset)), str(self.numbersMatrix[j][i]))
 
                 #draw the grid cell relative to the top left of the cell x,y. cellSize determines the height and width of a cell
                 qPainter.drawRect(x, y, self.cellSize, self.cellSize)
-
+        #Ensures gridcoordinates will not be added too
+        self.gridCoordsApplied = True
         #colour cells
         #if the closest cell is not default value
         if self.closestCoord != [-1,-1]:
@@ -126,7 +130,7 @@ class NumbersGrid(QWidget):
 
             #find the closest grid cell centre, this line iterates over the grid cells and compares them to the adjusted mouse position. Finding the closest centre of a cell
             minDistance = float('inf')  # Start with infinity so any distance is smaller
-
+            closestPoint = [-1,-1]
             for coords in self.gridCoordinates:
                 # find the center point of the current cell
                 cellCenterX = (coords[0] + (self.cellSize / 2)) - mousePos.x()
