@@ -61,6 +61,7 @@ class NumbersGrid(QWidget):
                 #draw the grid cell relative to the top left of the cell x,y. cellSize determines the height and width of a cell
                 qPainter.drawRect(x, y, self.cellSize, self.cellSize)
         #Ensures gridcoordinates will not be added too
+        
         self.gridCoordsApplied = True
         #colour cells
         #if the closest cell is not default value
