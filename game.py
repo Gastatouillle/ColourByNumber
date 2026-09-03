@@ -6,6 +6,7 @@ import numpy as np
 import colourToNumberConverter
 import math
 import time
+import ast
 
 class NumbersGrid(QWidget):
     #initialise all values for variables used between scopes
@@ -23,6 +24,8 @@ class NumbersGrid(QWidget):
         self.cellSize = 50
         self.selectedColour = -1
         self.elapsedTimes = []
+        self.title = ""
+
 
     #main event, runs every update
     def paintEvent(self, event):
@@ -117,7 +120,22 @@ class NumbersGrid(QWidget):
                 qPainter.setPen(Qt.PenStyle.SolidLine)
                 qPainter.drawText(20+(i*(self.cellSize)), 20, str(i+1))
 
+        #draw save button
+        qPainter.setBrush(QColor(145,145,145))
+        qPainter.drawRect((self.cellSize*len(self.usedColours)), 0, 100, 25)
+        qPainter.setBrush(Qt.BrushStyle.NoBrush)
+        qPainter.setPen(Qt.PenStyle.SolidLine)
+        qPainter.drawText((self.cellSize*len(self.usedColours)+35), int(25/2), "Save")
 
+    def saveButtonPress(self):
+        self.title = "Frog"
+        with open("savedGames/" + self.title + ".txt", "w") as file:
+            file.write(str(self.usedCoord))
+
+    def loadSaved(self, title):
+        self.title = title
+        with open("savedGames/" + self.title + ".txt", "r") as file:
+            self.usedCoord = ast.literal_eval(file.read())
 
     def mousePressEvent(self, event):
         start = time.time()
@@ -148,6 +166,8 @@ class NumbersGrid(QWidget):
 
             #if the mouse position relative to the window is greater than 50. Set the closest grid coordinate to the closest centre
             if windowPos.y() > 50 or windowPos.x() > 1250:
+                if windowPos.y() < 25 and windowPos.x() < 1350:
+                    self.saveButtonPress()
                 self.closestCoord = closestPoint   
                 print(closestPoint)
             elif windowPos.y() < 50 and windowPos.x() < 1250:
@@ -187,6 +207,7 @@ class NumbersGrid(QWidget):
 #create app object and window object
 app = QApplication(sys.argv)
 window = NumbersGrid()
+# window.loadSaved("Frog")
 #show the windows
 window.show()
 
@@ -194,7 +215,6 @@ window.show()
 if not app.exec():
     with open("elapsedTimes.txt", "w", encoding="utf-8") as file:
         file.write(str(window.elapsedTimes))
-    print(window.elapsedTimes)
     sys.exit()
 
 #8x26 grid for timing tests
