@@ -1,12 +1,13 @@
 from PyQt6.QtCore import QPoint, Qt
 from PyQt6.QtGui import QPainter, QPen, QColor
-from PyQt6.QtWidgets import QApplication, QWidget
+from PyQt6.QtWidgets import QApplication, QWidget, QLineEdit, QFileDialog, QVBoxLayout, QPushButton, QLabel, QMainWindow
 import sys
 import numpy as np
 import colourToNumberConverter
 import math
 import time
-import ast
+from pathlib import Path
+import json
 
 class NumbersGrid(QWidget):
     #initialise all values for variables used between scopes
@@ -25,6 +26,7 @@ class NumbersGrid(QWidget):
         self.selectedColour = -1
         self.elapsedTimes = []
         self.title = ""
+        self.loadingSaved = False
 
 
     #main event, runs every update
@@ -68,7 +70,7 @@ class NumbersGrid(QWidget):
         self.gridCoordsApplied = True
         #colour cells
         #if the closest cell is not default value
-        if self.closestCoord != [-1,-1]:
+        if self.closestCoord != [-1,-1] or self.loadingSaved == True:
             #find the number a cell/tile has been assigned by dividing the x and y value of the coordinate by the cellsize. eg: If closestcoord is [100, 100], tile is matrix index -> [2,2]
             tileNumber = self.numbersMatrix[int(((self.closestCoord[1])/self.cellSize))][int(((self.closestCoord[0])/self.cellSize))]
 
@@ -129,13 +131,18 @@ class NumbersGrid(QWidget):
 
     def saveButtonPress(self):
         self.title = "Frog"
-        with open("savedGames/" + self.title + ".txt", "w") as file:
-            file.write(str(self.usedCoord))
+        with open("savedGames/" + self.title + "_compressed.json", "w") as file:
+             json.dump(self.usedCoord, file, default=lambda x: int(x) if isinstance(x, np.integer) else x)
 
     def loadSaved(self, title):
         self.title = title
-        with open("savedGames/" + self.title + ".txt", "r") as file:
-            self.usedCoord = ast.literal_eval(file.read())
+        path = Path("savedGames/" + self.title + "_compressed.json")
+        if not path.exists():
+            path.write_text("[]")
+        with path.open("r") as file:
+            self.usedCoord = json.load(file)
+            self.loadingSaved = True
+            self.update()
 
     def mousePressEvent(self, event):
         start = time.time()
@@ -203,18 +210,71 @@ class NumbersGrid(QWidget):
             self.zoom /= 1.1
         self.update() 
 
+class MainMenu(QMainWindow):
+    def __init__(self):
+            super().__init__()
+            self.setWindowTitle("File Upload Example")
+            self.resize(1500, 600)
+            self.gameWindow = None
+
+            # File upload widget and layout
+            self.uploadContainer = QWidget(self)
+            uploadLayout = QVBoxLayout(self.uploadContainer)
+
+            self.saveFileName = QLineEdit(self)
+            self.saveFileName.setPlaceholderText("Please enter a savefile name")
+            uploadLayout.addWidget(self.saveFileName)
+
+            self.label = QLabel("No file selected", self)
+            uploadLayout.addWidget(self.label)
+
+            # Button to trigger file upload
+            self.uploadBtn = QPushButton("Upload File", self)
+            self.uploadBtn.clicked.connect(self.open_file_dialog)
+            uploadLayout.addWidget(self.uploadBtn)
+
+            self.uploadContainer.resize(200, 150)
+
+            #Game start
+            self.runContainer = QWidget(self)
+            runLayout = QVBoxLayout(self.runContainer)
+
+            self.runBtn = QPushButton("Start game", self)
+            self.runBtn.clicked.connect(self.startGame)
+            runLayout.addWidget(self.runBtn)
+
+            self.runContainer.resize(100,50)
+            self.runContainer.move(100, 200)
+
+    def open_file_dialog(self):
+        # Arguments: parent, title, initial directory, file filters
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Select File to Upload",
+            "",
+            "Images (*.png)"
+        )
+
+        if file_path:
+            self.label.setText(f"Selected File:\n{file_path}")
+
+    def startGame(self):
+        self.gameWindow = NumbersGrid()
+        self.gameWindow.loadSaved(self.saveFileName.text())
+        self.hide()
+        self.gameWindow.show()
+
 
 #create app object and window object
 app = QApplication(sys.argv)
-window = NumbersGrid()
-# window.loadSaved("Frog")
-#show the windows
-window.show()
+mainWindow = MainMenu()
+mainWindow.show()
 
 #on exit of app, kill all traces
 if not app.exec():
     with open("elapsedTimes.txt", "w", encoding="utf-8") as file:
-        file.write(str(window.elapsedTimes))
+        # file.write(str(Gamewindow.elapsedTimes))
+        None
     sys.exit()
 
 #8x26 grid for timing tests
