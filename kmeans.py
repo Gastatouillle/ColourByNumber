@@ -41,7 +41,6 @@ def euclidDistance(x1, y1, x2, y2):
     return math.dist((x1, y1), (x2, y2))
 
 def kMeans(points, means, colour_count):
-    #10 is placeholder, tune for ideal across data suite
     iterations = 10
 
     #creates an array of size = (n. of rows in points)
@@ -71,7 +70,7 @@ def kMeans(points, means, colour_count):
 
     return means, index
 
-def compressImage(means, index, img):
+def compressImage(means, index, img, savePath):
     centroid = np.array(means)
 
     #multiply by 255 and then convert to uint8 otherwise opencv saved a black image because all values are floats < 1
@@ -81,7 +80,8 @@ def compressImage(means, index, img):
 
     #flip from rgb to brg because opencv is bgr
     recovered_for_saving = cv2.cvtColor(recovered, cv2.COLOR_RGB2BGR)
-    cv2.imwrite('compressed.png', recovered_for_saving)
+    print("Saved to: " + savePath ) 
+    cv2.imwrite(savePath + 'compressed.png', recovered_for_saving)
 
     return recovered
 
@@ -110,6 +110,6 @@ if __name__ == '__main__':
     
     points, means = initMeans(img, colourCount)
     means, index = kMeans(points, means, colourCount)
-    recovered = compressImage(means, index, img)
+    recovered = compressImage(means, index, img, "")
 
     plotImages(recovered, img)

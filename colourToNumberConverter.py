@@ -1,13 +1,11 @@
 import kmeans
 import matplotlib.pyplot as plt
 import numpy as np
-import sys
 
-colourCount = 25
 
-def GenerateNumberGrid():
+def GenerateNumberGrid(compressedPath):
 
-    img_compressed = kmeans.readImage('compressed.png')
+    img_compressed = kmeans.readImage(compressedPath)
     pointsMatrix = img_compressed.reshape((-1, img_compressed.shape[2]))
     print(pointsMatrix)
 

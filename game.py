@@ -1,6 +1,6 @@
 from PyQt6.QtCore import QPoint, Qt
 from PyQt6.QtGui import QPainter, QPen, QColor
-from PyQt6.QtWidgets import QApplication, QWidget, QLineEdit, QFileDialog, QVBoxLayout, QPushButton, QLabel, QMainWindow
+from PyQt6.QtWidgets import QApplication, QWidget, QLineEdit, QFileDialog, QVBoxLayout, QPushButton, QLabel, QMainWindow, QScrollArea
 import sys
 import numpy as np
 import colourToNumberConverter
@@ -8,6 +8,7 @@ import math
 import time
 from pathlib import Path
 import json
+import kmeans
 
 class NumbersGrid(QWidget):
     #initialise all values for variables used between scopes
@@ -16,7 +17,7 @@ class NumbersGrid(QWidget):
         self.setWindowTitle("Colour By Number")
         self.panOffset = QPoint(0,0)
         self.lastMousePos = QPoint(0,0)
-        self.numbersMatrix, self.usedColours = colourToNumberConverter.GenerateNumberGrid()
+        self.numbersMatrix, self.usedColours = None, None
         self.zoom = 1.0
         self.gridCoordinates = []
         self.gridCoordsApplied = False
@@ -27,6 +28,7 @@ class NumbersGrid(QWidget):
         self.elapsedTimes = []
         self.title = ""
         self.loadingSaved = False
+        self.saved = False
 
 
     #main event, runs every update
@@ -123,20 +125,31 @@ class NumbersGrid(QWidget):
                 qPainter.drawText(20+(i*(self.cellSize)), 20, str(i+1))
 
         #draw save button
-        qPainter.setBrush(QColor(145,145,145))
-        qPainter.drawRect((self.cellSize*len(self.usedColours)), 0, 100, 25)
+
+        #if the game is not saved, ie: false. Draw a grey button. If its saved, draw a green button
+        if self.saved == False:
+            qPainter.setBrush(QColor(145,145,145))
+            qPainter.drawRect((self.cellSize*len(self.usedColours)), 0, 100, 25)
+        elif self.saved == True:
+            qPainter.setBrush(QColor(76, 187, 23))
+            qPainter.drawRect((self.cellSize*len(self.usedColours)), 0, 100, 25)
+
         qPainter.setBrush(Qt.BrushStyle.NoBrush)
         qPainter.setPen(Qt.PenStyle.SolidLine)
         qPainter.drawText((self.cellSize*len(self.usedColours)+35), int(25/2), "Save")
 
     def saveButtonPress(self):
-        self.title = "Frog"
-        with open("savedGames/" + self.title + "_compressed.json", "w") as file:
+        #turn the save button green
+        self.saved = True
+
+        #iterates over usedCoords and converts any np.integers into integers
+        with open("savedGames/" + self.title + "/" + self.title + "_compressed.json", "w") as file:
              json.dump(self.usedCoord, file, default=lambda x: int(x) if isinstance(x, np.integer) else x)
 
-    def loadSaved(self, title):
-        self.title = title
-        path = Path("savedGames/" + self.title + "_compressed.json")
+    def loadSaved(self):
+        path = Path("savedGames/" + self.title + "/" + self.title + "_compressed.json")
+        #if the save file path doesnt exist, create it, then write [] to it. [] is a json blank template
+        #if the save file path exists, read the data into usedcoord
         if not path.exists():
             path.write_text("[]")
         with path.open("r") as file:
@@ -144,8 +157,16 @@ class NumbersGrid(QWidget):
             self.loadingSaved = True
             self.update()
 
+    #simple setter for current game title (whatever user inputs)
+    def setTitle(self, title):
+        self.title = title
+
     def mousePressEvent(self, event):
         start = time.time()
+
+        #turns save button grey on mouse press to indicate current state not saved
+        self.saved = False
+
         #on right click, set the last mouse position to the current mouse position. Used for zoom and pan later
         if event.button() == Qt.MouseButton.RightButton:
             self.lastMousePos = event.pos()
@@ -210,12 +231,15 @@ class NumbersGrid(QWidget):
             self.zoom /= 1.1
         self.update() 
 
+#the main menu for the game
 class MainMenu(QMainWindow):
     def __init__(self):
             super().__init__()
-            self.setWindowTitle("File Upload Example")
-            self.resize(1500, 600)
+            #set window size, initialize variables
+            self.setWindowTitle("Main menu")
+            self.resize(800, 600)
             self.gameWindow = None
+            self.filePath = None
 
             # File upload widget and layout
             self.uploadContainer = QWidget(self)
@@ -246,24 +270,76 @@ class MainMenu(QMainWindow):
             self.runContainer.resize(100,50)
             self.runContainer.move(100, 200)
 
+            #saved games list
+            self.savedContainer = QWidget(self)
+            savedLayout = QVBoxLayout(self.savedContainer)
+
+            self.scrollContainer = QWidget(self)
+            scrollLayout = QVBoxLayout(self.scrollContainer)
+
+            self.scrollArea = QScrollArea()
+            self.scrollArea.setWidgetResizable(True)
+
+            #add a label widget to the scroll layounf for each saved game
+            for i in self.getSavedGames():
+                savedGame = QLabel(str(i))
+                scrollLayout.addWidget(savedGame)
+
+            self.scrollArea.setWidget(self.scrollContainer)
+            savedLayout.addWidget(self.scrollArea)
+            self.savedContainer.resize(500,500)
+            self.savedContainer.move(250, 0)
+
     def open_file_dialog(self):
-        # Arguments: parent, title, initial directory, file filters
-        file_path, _ = QFileDialog.getOpenFileName(
+        #select a file to upload limited to png files
+        self.filePath, _ = QFileDialog.getOpenFileName(
             self,
             "Select File to Upload",
             "",
             "Images (*.png)"
         )
 
-        if file_path:
-            self.label.setText(f"Selected File:\n{file_path}")
+        #if a file is uploaded, set a textbox to display the uploaded filepath
+        if self.filePath:
+            self.label.setText(f"Selected File:\n{self.filePath}")
 
     def startGame(self):
+        #initialize game window
         self.gameWindow = NumbersGrid()
-        self.gameWindow.loadSaved(self.saveFileName.text())
+
+        #if there is a new file uploaded, create new folder for game saves and to store image. This will overwrite any folder with the same name
+        if self.filePath:
+            self.generateCompressed()
+            self.gameWindow.setTitle(self.saveFileName.text())
+        else:
+            #if there is no new file, generate data from existing savefile and from existing compressed image
+            self.gameWindow.numbersMatrix, self.gameWindow.usedColours = colourToNumberConverter.GenerateNumberGrid("savedGames/" + self.saveFileName.text() + "/compressed.png")
+            self.gameWindow.setTitle(self.saveFileName.text())
+            self.gameWindow.loadSaved()
+
+        #hide main menu and show game window
         self.hide()
         self.gameWindow.show()
 
+    def generateCompressed(self):
+        #make a new folder at provided path
+        Path("savedGames/" + self.saveFileName.text()).mkdir(parents=True, exist_ok=True)
+        #initialize random means from the uploaded image
+        points, means = kmeans.initMeans(kmeans.readImage(self.filePath), 25)
+        #group means
+        means, index = kmeans.kMeans(points, means, 25)
+        #compress and generate final image
+        kmeans.compressImage(means, index, kmeans.readImage(self.filePath), "savedGames/" + self.saveFileName.text() + "/")
+        #initialize used colours and full numbers grid from iamge
+        self.gameWindow.numbersMatrix, self.gameWindow.usedColours = colourToNumberConverter.GenerateNumberGrid("savedGames/" + self.saveFileName.text() + "/compressed.png")
+
+    def getSavedGames(self):
+        path = Path("SavedGames")
+        savedGames = []
+        for i in path.iterdir():
+            if i.is_dir():
+                savedGames.append(i.name)
+        return savedGames
 
 #create app object and window object
 app = QApplication(sys.argv)
@@ -273,7 +349,6 @@ mainWindow.show()
 #on exit of app, kill all traces
 if not app.exec():
     with open("elapsedTimes.txt", "w", encoding="utf-8") as file:
-        # file.write(str(Gamewindow.elapsedTimes))
         None
     sys.exit()
 
