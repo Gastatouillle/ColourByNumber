@@ -3,6 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 
+#Kmeans algorithm is provided by GeeksForGeeks and was not developed.
+# https://www.geeksforgeeks.org/machine-learning/image-compression-using-k-means-clustering/
+
 def readImage(image_path):
     #open image, resize contents, change colours to RGB
 
@@ -85,18 +88,21 @@ def compressImage(means, index, img, savePath):
 
     return recovered
 
-def plotImages(recovered, img):
+def plotImages(recovered, image_path):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
 
     # Display the first image
+    img = cv2.imread(image_path)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
     ax1.imshow(img)
     ax1.set_title('original')
-    ax1.axis('off')  # Hide grid ticks and pixel borders
+    ax1.axis('off')
 
     # Display the second image
     ax2.imshow(recovered)
     ax2.set_title('compressed')
-    ax2.axis('off')  # Hide grid ticks and pixel borders
+    ax2.axis('off')
 
     # Adjust layout spacing and show
     plt.tight_layout()
@@ -104,7 +110,7 @@ def plotImages(recovered, img):
 
 
 if __name__ == '__main__':
-    img = readImage('images.png')
+    img = readImage('Fish.png')
 
     colourCount= 25
     
@@ -112,4 +118,4 @@ if __name__ == '__main__':
     means, index = kMeans(points, means, colourCount)
     recovered = compressImage(means, index, img, "")
 
-    plotImages(recovered, img)
+    plotImages(recovered, 'Fish.png')

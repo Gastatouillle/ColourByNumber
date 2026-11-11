@@ -34,33 +34,3 @@ def GenerateNumberGrid(compressedPath):
 
     numbersMatrix = np.array(numbersMatrix).reshape(50, 50)
     return numbersMatrix, usedColours
-
-def plotImages(numbersmatrix, img):
-    fig, ax1 = plt.subplots()
-
-    # Display the first image
-    ax1.imshow(img)
-    ax1.set_title('original')
-
-    height, width = numbersmatrix.shape
-
-    fontsize = max(1, min(12, 500 / max(width, height)))
-
-    for y in range(height):
-         for x in range(width):
-            ax1.text(x, y, str(numbersmatrix[y, x]), ha="center", va="center", color="black", fontsize=fontsize)
-            
-
-    ax1.set_xticks([x - 0.5 for x in range(width + 1)], minor=True)
-    ax1.set_yticks([y - 0.5 for y in range(height + 1)], minor=True)
-    ax1.grid(which="minor")
-
-    ax1.set_xticks([])
-    ax1.set_yticks([])
-
-    # Adjust layout spacing and show
-    plt.tight_layout()
-    plt.show()
-
-if __name__ == '__main__':
-    plotImages(GenerateNumberGrid(), kmeans.readImage("compressed.png"))
